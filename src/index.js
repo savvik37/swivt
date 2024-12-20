@@ -1,21 +1,41 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import { BrowserRouter, Routes, Route } from "react-router";
 import Home from './home';
 import Map from './map';
 import Nav from './nav';
+import Login from './login';
 import './App.css'
+import { AuthProvider } from './context/AuthProvider';
+import AuthContext from './context/AuthProvider';
+
+const App = () => {
+
+  const { auth } = useContext(AuthContext);
+
+  return (
+    <div class="app">
+      {auth?.user? (
+        <>
+          <Nav />
+          <Routes>
+            <Route path="/" element={<Home />}/>
+            <Route path="/map" element={<Map />}/>
+          </Routes>
+        </>
+      ) : (
+        <Login />
+      )}
+    </div> 
+  )
+}
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
-  <BrowserRouter class="app">
-    <div class="app">
-      <Nav/>
-      <Routes>
-        <Route path="/" element={<Home />}/>
-        <Route path="/map" element={<Map />}/>
-      </Routes>
-    </div>
-  </BrowserRouter>
+  <AuthProvider>
+    <BrowserRouter>
+      <App />
+    </BrowserRouter> 
+  </AuthProvider>
 );

@@ -6,21 +6,21 @@ export default function Nav() {
     <div class="navbar">
       <NavLink to="/" end>
         <div class="navbardivideHome">
-          <p class="navp" id="navp1"><span>Home</span></p>
+          <p class="navp zoomAnimation" id="navp1"><span>Home</span></p>
         </div>      
       </NavLink>
         <div class="navbardivideOptions">
         <NavLink to="/map" end>
-          <p class="navp" id="navp2"><span>Map</span></p>
+          <p class="navp zoomAnimation" id="navp2"><span>Map</span></p>
         </NavLink>
         <NavLink to="/" end>
-          <p class="navp" id="navp2"><span>OPTION</span></p>
+          <p class="navp zoomAnimation" id="navp2"><span>OPTION</span></p>
         </NavLink>
         <NavLink to="/" end>
-          <p class="navp" id="navp2"><span>OPTION</span></p>
+          <p class="navp zoomAnimation" id="navp2"><span>OPTION</span></p>
         </NavLink>      
         <NavLink to="/" end>
-          <p class="navp" id="navp2"><span>OPTION</span></p>
+          <p class="navp zoomAnimation" id="navp2"><span>OPTION</span></p>
         </NavLink>           
         </div>  
 

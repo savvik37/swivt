@@ -8,6 +8,18 @@ export default function Map() {
     const [map, setMap] = useState({})
     const [actions, setActions] = useState({})
     const [currentLocation, setCurrentLocation] = useState({location_id: "67637065a9ec8adb8b96da94"})
+    const [playerActions, setPlayerActions] = useState({})
+
+    const loadMap = async () => {
+        try{
+            console.log("attempting to load map")
+            const locations = await axios.get(`${API_BASE_URL}/getAllLocations`)
+            setMap(locations.data);
+            console.log("map loaded -> ", {map})
+        }catch{
+            console.log("loadMap error occured")
+        }
+    }
 
     const loadActions = async () => {
         try{
@@ -24,17 +36,6 @@ export default function Map() {
     } 
 
     useEffect(()=>{
-        const loadMap = async () => {
-            try{
-                console.log("attempting to load map")
-                const locations = await axios.get(`${API_BASE_URL}/getAllLocations`)
-                setMap(locations.data);
-                console.log("map loaded -> ", {map})
-            }catch{
-                console.log("loadMap error occured")
-            }
-        }
-      
         loadMap()
         loadActions()
     }, [])
@@ -73,7 +74,7 @@ export default function Map() {
                 <div key={index} class="transactions2">
                     <p class=""><strong>{action.action_name}</strong></p>
                     <button type="button" class="actionButton" onClick={(e) => handleAction(e, action.action_route)}>Perform</button>
-                    <p class="">total remaining: {action.remaining}</p>
+                    <p class="animated">total remaining: {action.remaining}</p>
                 </div>
             ))}
         </div>

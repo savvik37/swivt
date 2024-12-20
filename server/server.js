@@ -48,6 +48,29 @@ const UserModel = mongoose.model("users", UserSchema)
 const LocationsModel = mongoose.model("locations", LocationsSchema)
 const ActionsModel = mongoose.model("actions", ActionsSchema)
 
+app.post("/createuser", async (req,res)=>{
+    try{
+        const newUser = await UserModel.create(req.body)
+        res.status(200).json("user created")
+    }
+    catch(err){
+        res.status(400).json(err)
+    }
+})
+
+app.post("/signin", async (req,res)=>{
+    try{
+        const reqemail = req.body.email
+        const reqpass = req.body.password
+        const queryUser = await UserModel.findOne({email: reqemail, password: reqpass}, "_id username")
+        console.log(queryUser._id)
+        res.status(200).json(queryUser)
+    }
+    catch(err){
+        res.status(400).json(err)
+    }
+})
+
 app.get("/getAllLocations", async (req, res)=>{
     try{
         console.log("getAllLocations route accessed")
@@ -83,7 +106,7 @@ app.post("/createaction", async (req, res)=>{
         const newAction = req.body
         console.log(newAction)
         await ActionsModel.create(newAction);
-        console.log("new action created!")
+        console.log("new action created!") 
         res.json(newAction)
     }catch(err){
         res.status(400).json(err)
