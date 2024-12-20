@@ -17,14 +17,16 @@ function Login() {
       try{
         e.preventDefault();
         const user = { email, password };
-        const response = await axios.post(`${API_BASE_URL}/signin`, user);
+        const response = await axios.post(`${API_BASE_URL}/signin`, user, {
+          withCredentials: true
+        });
         if(!response){
             console.error("LOGIN ERROR TRY SIDE")
         }
+        console.log(response.data)
         setAuth({
             user: true,
-            user_id: response.data._id,
-            username: response.data.username
+            username: response.data
         })
       }
       catch (err){

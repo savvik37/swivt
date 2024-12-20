@@ -3,6 +3,8 @@ import axios from 'axios';
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 const CONSTRING = process.env.REACT_APP_CONSTRING;
 
+axios.defaults.withCredentials = true;
+
 export default function Map() {
 
     const [map, setMap] = useState({})
@@ -13,11 +15,13 @@ export default function Map() {
     const loadMap = async () => {
         try{
             console.log("attempting to load map")
-            const locations = await axios.get(`${API_BASE_URL}/getAllLocations`)
+            const locations = await axios.get(`${API_BASE_URL}/getAllLocations`, {
+                withCredentials: true
+            })
             setMap(locations.data);
             console.log("map loaded -> ", {map})
-        }catch{
-            console.log("loadMap error occured")
+        }catch(err){
+            console.log("Error loading map:", err.response || err.message)
         }
     }
 
@@ -26,6 +30,8 @@ export default function Map() {
             console.log("attempting to loadActions")
             const response = await axios.post(`${API_BASE_URL}/getactions`,{
                 location_id: currentLocation.location_id
+            }, {
+                withCredentials: true
             })
             setActions(response.data);
             console.log("actions loaded -> ", actions)  

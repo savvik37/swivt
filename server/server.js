@@ -7,17 +7,45 @@ const AutoIncrement = require('mongoose-sequence')(mongoose);
 const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
+const cookieParser = require('cookie-parser');
 const bcrypt = require("bcrypt");
+const jwt = require('jsonwebtoken');
 //const baseUrl = process.env.API_BASE_URL;
 const connectionString = process.env.CONSTRING;
+const jwtsecret = process.env.JWT_SECRET;
+
+const authLogic = async (req,res,next) => {
+    console.log("authLogic triggered!")
+    const token = req.cookies.token;
+    console.log(token)
+    if(!token){
+        console.log("NO TOKEN!!!")
+        return res.status(401).json({errorMessage:"fuck off"})
+    }
+    try{
+        console.log("Attempting to verify token...");
+        const decoded = jwt.verify(token, "junglist");
+        console.log(decoded)
+        const user_id = decoded.user_id
+        console.log("authentication successful: ",user_id)
+        next();
+    }
+    catch(err){
+        res.status(401).json({ err: 'Invalid token' });
+    }
+}
 
 const app = express()
 
 const corsOptions = {
-    origin:  ['http://localhost:3000', 'http://192.168.137.1:3000',  'http://192.168.0.27:3000'],  // Your frontend's URL
+    origin: ['http://localhost:3000', 'http://192.168.137.1:3000', 'http://192.168.0.27:3000'],
     methods: ['GET', 'POST'],
-    allowedHeaders: ['Content-Type'],
+    credentials: true,  // Allow cookies
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    exposedHeaders: ['set-cookie'],  
   };
+
+app.use(cookieParser());
 app.use(cors(corsOptions));
 app.use(bodyParser.json())
 
@@ -50,7 +78,10 @@ const ActionsModel = mongoose.model("actions", ActionsSchema)
 
 app.post("/createuser", async (req,res)=>{
     try{
-        const newUser = await UserModel.create(req.body)
+        const { username, email, password } = req.body
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const newUser = await UserModel.create({ username, email, password: hashedPassword })
+        console.log(newUser)
         res.status(200).json("user created")
     }
     catch(err){
@@ -62,16 +93,40 @@ app.post("/signin", async (req,res)=>{
     try{
         const reqemail = req.body.email
         const reqpass = req.body.password
-        const queryUser = await UserModel.findOne({email: reqemail, password: reqpass}, "_id username")
-        console.log(queryUser._id)
-        res.status(200).json(queryUser)
+        const hashedQuery = await UserModel.findOne({email: reqemail}, "password")
+        const hashedPassword = hashedQuery.password.toString();
+        console.log("hashedPassword: ",hashedPassword, "and text pass: ", reqpass)
+        
+        const checkPass = bcrypt.compare(reqpass, hashedPassword);
+        if(!checkPass){
+            return res.status(401).json({ error: 'Authentication failed' });
+        }
+        const queryUser = await UserModel.findOne({email: reqemail, password: hashedPassword}, "_id username password")
+        console.log("queryUser._id: ", queryUser._id.toString())
+        const strUser_id = queryUser._id.toString();
+        const resUser = queryUser.username
+        console.log(resUser)
+        const token = jwt.sign({ user_id: strUser_id }, 'junglism', { expiresIn: "1h" });
+        console.log("jsonwebtoken: ", token);
+
+        //const token = "foo";
+
+        res.cookie('token', token, {
+            httpOnly: true,           // Prevents JavaScript access
+            secure: false,
+            sameSite: 'strict',       // Protects against CSRF
+            maxAge: 3600000          // 1 hour in milliseconds
+        });
+        
+          
+        res.status(200).json(resUser)
     }
     catch(err){
         res.status(400).json(err)
     }
 })
 
-app.get("/getAllLocations", async (req, res)=>{
+app.get("/getAllLocations", authLogic, async (req, res)=>{
     try{
         console.log("getAllLocations route accessed")
         const locations = await LocationsModel.find()
