@@ -1,26 +1,37 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useContext } from 'react'
+import { useNavigate } from 'react-router';
 import axios from 'axios';
+import AuthContext from './context/AuthProvider';
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
-const CONSTRING = process.env.REACT_APP_CONSTRING;
 
 axios.defaults.withCredentials = true;
 
 export default function Map() {
 
+    const navigate = useNavigate("/")
+
     const [map, setMap] = useState({})
     const [actions, setActions] = useState({})
     const [currentLocation, setCurrentLocation] = useState({location_id: "67637065a9ec8adb8b96da94"})
     const [playerActions, setPlayerActions] = useState({})
+    const [locationsFallback, setLocationsFallback] = useState(false)
+    
+    const { auth, setAuth } = useContext(AuthContext);
+    console.log({auth})
 
     const loadMap = async () => {
         try{
             console.log("attempting to load map")
-            const locations = await axios.get(`${API_BASE_URL}/getAllLocations`, {
-                withCredentials: true
-            })
+            const locations = await axios.get(`${API_BASE_URL}/getAllLocations`)
+            setLocationsFallback(false)
             setMap(locations.data);
             console.log("map loaded -> ", {map})
         }catch(err){
+            setAuth({
+                user: false
+            })
+            console.log("auth: ",{auth})
+            setLocationsFallback(true)
             console.log("Error loading map:", err.response || err.message)
         }
     }
@@ -65,15 +76,20 @@ export default function Map() {
   return (
     <div class="mapComponent animated">
         <div class="mapContainer animated">
-            {Object.values(map).map((location, index)=>(
-                <div key={index} class="transactions2">
-                    <p class=""><strong>{location.name}</strong></p>
-                    <div class="cordDiv">
-                        <p class="">cords: {location.cord_x}, </p>
-                        <p class="">{location.cord_y}</p>
+            {locationsFallback ? (
+               <h1>LOCATIONS NOT LOADED</h1>
+            ) : (
+                Object.values(map).map((location, index)=>(
+                    <div key={index} class="transactions2">
+                        <p class=""><strong>{location.name}</strong></p>
+                        <div class="cordDiv">
+                            <p class="">cords: {location.cord_x}, </p>
+                            <p class="">{location.cord_y}</p>
+                        </div>
                     </div>
-                </div>
-            ))}           
+                ))
+            )}
+          
         </div>
         <div class="mapContainer animated">
             {Object.values(actions).map((action, index)=>(

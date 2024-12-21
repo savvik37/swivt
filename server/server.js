@@ -12,7 +12,11 @@ const bcrypt = require("bcrypt");
 const jwt = require('jsonwebtoken');
 //const baseUrl = process.env.API_BASE_URL;
 const connectionString = process.env.CONSTRING;
-const jwtsecret = process.env.JWT_SECRET;
+const secret1 = process.env.SUPERSECRETWORD;
+
+console.log(process.env.ENV_1)
+
+console.log(secret1)
 
 const authLogic = async (req,res,next) => {
     console.log("authLogic triggered!")
@@ -24,7 +28,7 @@ const authLogic = async (req,res,next) => {
     }
     try{
         console.log("Attempting to verify token...");
-        const decoded = jwt.verify(token, "junglist");
+        const decoded = jwt.verify(token, secret1);
         console.log(decoded)
         const user_id = decoded.user_id
         console.log("authentication successful: ",user_id)
@@ -40,13 +44,13 @@ const app = express()
 const corsOptions = {
     origin: ['http://localhost:3000', 'http://192.168.137.1:3000', 'http://192.168.0.27:3000'],
     methods: ['GET', 'POST'],
-    credentials: true,  // Allow cookies
+    credentials: true,
     allowedHeaders: ['Content-Type', 'Authorization'],
     exposedHeaders: ['set-cookie'],  
   };
 
-app.use(cookieParser());
 app.use(cors(corsOptions));
+app.use(cookieParser());
 app.use(bodyParser.json())
 
 mongoose.connect(connectionString, { useNewUrlParser: true, useUnifiedTopology: true }); //NEED TO FIX THE CONNETION! NOTHING IS WORKING
@@ -55,6 +59,34 @@ const UserSchema = new mongoose.Schema({
     username: String,
     email: String,
     password: String
+})
+
+const PlayerSchema = new mongoose.Schema({
+    user_id:[
+        {type: Schema.Types.ObjectId, ref: "Users"}
+    ],
+    xp: Number,
+    cash: Number,
+    tech: Number,
+    gather_speed: Number,
+    travel_speed: Number,
+    location_id:[
+        {type: Schema.Types.ObjectId, ref: 'Locations'}
+      ]
+})
+
+const ItemSchema = new mongoose.Schema({
+    
+})
+
+const GlobalInventorySchema = new mongoose.Schema({
+    owner:[
+        {type: Schema.Types.ObjectId, ref: "Users"}
+    ],
+    item_id: [
+        {type: Schema.Types.ObjectId, ref: "Items"}
+    ],
+    tradeable: Boolean,
 })
 
 const LocationsSchema = new mongoose.Schema({
@@ -73,6 +105,9 @@ const ActionsSchema = new mongoose.Schema({
 })
 
 const UserModel = mongoose.model("users", UserSchema)
+const PlayerModel = mongoose.model("players", PlayerSchema)
+const ItemModel = mongoose.model("items", ItemSchema)
+const GlobalInventoryModel = mongoose.model("globalinventory", GlobalInventorySchema)
 const LocationsModel = mongoose.model("locations", LocationsSchema)
 const ActionsModel = mongoose.model("actions", ActionsSchema)
 
@@ -91,13 +126,14 @@ app.post("/createuser", async (req,res)=>{
 
 app.post("/signin", async (req,res)=>{
     try{
+        console.log("sign in route .env check -> ", secret1)
         const reqemail = req.body.email
         const reqpass = req.body.password
         const hashedQuery = await UserModel.findOne({email: reqemail}, "password")
         const hashedPassword = hashedQuery.password.toString();
         console.log("hashedPassword: ",hashedPassword, "and text pass: ", reqpass)
         
-        const checkPass = bcrypt.compare(reqpass, hashedPassword);
+        const checkPass = await bcrypt.compare(reqpass, hashedPassword);
         if(!checkPass){
             return res.status(401).json({ error: 'Authentication failed' });
         }
@@ -106,7 +142,7 @@ app.post("/signin", async (req,res)=>{
         const strUser_id = queryUser._id.toString();
         const resUser = queryUser.username
         console.log(resUser)
-        const token = jwt.sign({ user_id: strUser_id }, 'junglism', { expiresIn: "1h" });
+        const token = jwt.sign({ user_id: strUser_id }, secret1, { expiresIn: "1h" });
         console.log("jsonwebtoken: ", token);
 
         //const token = "foo";
