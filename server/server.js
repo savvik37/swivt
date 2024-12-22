@@ -10,6 +10,7 @@ const bodyParser = require("body-parser");
 const cookieParser = require('cookie-parser');
 const bcrypt = require("bcrypt");
 const jwt = require('jsonwebtoken');
+const { Route } = require('react-router');
 //const baseUrl = process.env.API_BASE_URL;
 const connectionString = process.env.CONSTRING;
 const secret1 = process.env.SUPERSECRETWORD;
@@ -53,7 +54,7 @@ app.use(cors(corsOptions));
 app.use(cookieParser());
 app.use(bodyParser.json())
 
-mongoose.connect(connectionString, { useNewUrlParser: true, useUnifiedTopology: true }); //NEED TO FIX THE CONNETION! NOTHING IS WORKING
+mongoose.connect(connectionString, { useNewUrlParser: true, useUnifiedTopology: true });
 
 const UserSchema = new mongoose.Schema({
     username: String,
@@ -75,8 +76,17 @@ const PlayerSchema = new mongoose.Schema({
       ]
 })
 
+//  ITEM ARCHITECTURE
+//  Item type must be name of route to execute respective function e.g.
+//  a health restore consumable would call a generic route such as "heal_consume"
+//  SECURITY NOTE: will need to check at every item function if player is using/referencing item in the correct context
 const ItemSchema = new mongoose.Schema({
-    
+    item_name: String,
+    item_desc: String,
+    item_func: {
+        route: String,
+        //the rest of the parameters will be determined by the route/function of the item
+    }
 })
 
 const GlobalInventorySchema = new mongoose.Schema({
