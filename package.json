@@ -21,7 +21,8 @@
     "react-dom": "^19.0.0",
     "react-router": "^7.0.2",
     "react-scripts": "5.0.1",
-    "socket.io": "^4.8.1"
+    "socket.io": "^4.8.1",
+    "yarn": "^1.22.22"
   },
   "scripts": {
     "start": "react-scripts start",

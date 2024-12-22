@@ -5,6 +5,7 @@ const mongodb = require("mongodb")
 const { mongoose, Schema, connection } = require("mongoose")
 const AutoIncrement = require('mongoose-sequence')(mongoose);
 const express = require("express");
+var router = express.Router();
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const cookieParser = require('cookie-parser');
@@ -14,27 +15,15 @@ const { Route } = require('react-router');
 //const baseUrl = process.env.API_BASE_URL;
 const connectionString = process.env.CONSTRING;
 const secret1 = process.env.SUPERSECRETWORD;
+const authLogic = require('../routes/authLogic');
 
-const authLogic = async (req,res,next) => {
-    console.log("authLogic triggered!")
-    const token = req.cookies.token;
-    console.log(token)
-    if(!token){
-        console.log("NO TOKEN!!!")
-        return res.status(401).json({errorMessage:"fuck off"})
-    }
-    try{
-        console.log("Attempting to verify token...");
-        const decoded = jwt.verify(token, secret1);
-        console.log(decoded)
-        const user_id = decoded.user_id
-        console.log("authentication successful: ",user_id)
-        req.passed_user_id = user_id
-        next();
-    }
-    catch(err){
-        res.status(401).json({ err: 'Invalid token' });
-    }
-}
+//ITEM CONSUME ROUTES
+const healConsumeRoute = require('../game_routes/heal_consume');
+//const poisonConsumeRoute = require('../game_routes/poison_consume');
+//<---------->
 
-module.exports = authLogic;
+router.use("/heal", authLogic, healConsumeRoute);
+//router.use("/posion", poisonConsumeRoute);
+
+
+module.exports = router;

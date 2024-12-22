@@ -5,6 +5,7 @@ const mongodb = require("mongodb")
 const { mongoose, Schema, connection } = require("mongoose")
 const AutoIncrement = require('mongoose-sequence')(mongoose);
 const express = require("express");
+const route = express.Router()
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const cookieParser = require('cookie-parser');
@@ -14,6 +15,7 @@ const { Route } = require('react-router');
 //const baseUrl = process.env.API_BASE_URL;
 const connectionString = process.env.CONSTRING;
 const secret1 = process.env.SUPERSECRETWORD;
+const authLogic = require('../routes/authLogic');
 
 var router = express.Router();
 
@@ -32,17 +34,21 @@ const ItemSchema = new mongoose.Schema({
     }
 })
 
-const ItemModel = mongoose.model("items", ItemSchema)
+const GlobalInventorySchema = new mongoose.Schema({
+    owner:[
+        {type: Schema.Types.ObjectId, ref: "Users"}
+    ],
+    item_id: [
+        {type: Schema.Types.ObjectId, ref: "Items"}
+    ],
+    amount: Number,
+    tradeable: Boolean,
+})
 
-//boiler plate action route
+//heal potion route
 router.post("/", async (req, res)=>{
     try{
-        const item = await ItemModel.find()
-        if(!item){
-            console.log("there is a db error")
-            return res.status(404).json({message: "there is a db error"})
-        }
-        
+        //foo healing logic
         res.json("player healed")
     }catch{
         res.status(400).json("error occured")

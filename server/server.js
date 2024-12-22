@@ -15,35 +15,18 @@ const { Route } = require('react-router');
 const connectionString = process.env.CONSTRING;
 const secret1 = process.env.SUPERSECRETWORD;
 
-console.log(process.env.ENV_1)
+//GENERIC ROUTE IMPORTS
+const authLogic = require('../src/routes/authLogic');
+//<------------>
 
-console.log(secret1)
-
-const authLogic = async (req,res,next) => {
-    console.log("authLogic triggered!")
-    const token = req.cookies.token;
-    console.log(token)
-    if(!token){
-        console.log("NO TOKEN!!!")
-        return res.status(401).json({errorMessage:"fuck off"})
-    }
-    try{
-        console.log("Attempting to verify token...");
-        const decoded = jwt.verify(token, secret1);
-        console.log(decoded)
-        const user_id = decoded.user_id
-        console.log("authentication successful: ",user_id)
-        next();
-    }
-    catch(err){
-        res.status(401).json({ err: 'Invalid token' });
-    }
-}
+//GAME ROUTE IMPORTS
+const itemConsumeRoutes = require('../src/game_routes/item_consume');
+//<------------>
 
 const app = express()
 
 const corsOptions = {
-    origin: ['http://localhost:3000', 'http://192.168.137.1:3000', 'http://192.168.0.27:3000'],
+    origin: ['http://localhost:3000', 'http://192.168.137.1:3000', 'http://192.168.0.27:3000', 'http://192.168.1.198:3000'],
     methods: ['GET', 'POST'],
     credentials: true,
     allowedHeaders: ['Content-Type', 'Authorization'],
@@ -54,18 +37,23 @@ app.use(cors(corsOptions));
 app.use(cookieParser());
 app.use(bodyParser.json())
 
+//GAME ROUTES
+app.use("game/item_consume", itemConsumeRoutes)
+//<------------>
+
 mongoose.connect(connectionString, { useNewUrlParser: true, useUnifiedTopology: true });
 
 const UserSchema = new mongoose.Schema({
     username: String,
     email: String,
-    password: String
+    password: String,
 })
 
 const PlayerSchema = new mongoose.Schema({
     user_id:[
         {type: Schema.Types.ObjectId, ref: "Users"}
     ],
+    health: Number,
     xp: Number,
     cash: Number,
     tech: Number,
@@ -91,11 +79,12 @@ const ItemSchema = new mongoose.Schema({
 
 const GlobalInventorySchema = new mongoose.Schema({
     owner:[
-        {type: Schema.Types.ObjectId, ref: "Users"}
+        {type: Schema.Types.ObjectId, ref: "users"}
     ],
     item_id: [
-        {type: Schema.Types.ObjectId, ref: "Items"}
+        {type: Schema.Types.ObjectId, ref: "items"}
     ],
+    amount: Number,
     tradeable: Boolean,
 })
 
@@ -110,14 +99,14 @@ const ActionsSchema = new mongoose.Schema({
     action_route: String,
     remaining: Number,
     location_id:[
-      {type: Schema.Types.ObjectId, ref: 'Locations'}
+      {type: Schema.Types.ObjectId, ref: 'locations'}
     ]
 })
 
 const UserModel = mongoose.model("users", UserSchema)
 const PlayerModel = mongoose.model("players", PlayerSchema)
 const ItemModel = mongoose.model("items", ItemSchema)
-const GlobalInventoryModel = mongoose.model("globalinventory", GlobalInventorySchema)
+const GlobalInventoryModel = mongoose.model("globalinventories", GlobalInventorySchema)
 const LocationsModel = mongoose.model("locations", LocationsSchema)
 const ActionsModel = mongoose.model("actions", ActionsSchema)
 
@@ -163,12 +152,58 @@ app.post("/signin", async (req,res)=>{
             sameSite: 'strict',       // Protects against CSRF
             maxAge: 3600000          // 1 hour in milliseconds
         });
-        
-          
+
         res.status(200).json(resUser)
     }
     catch(err){
         res.status(400).json(err)
+    }
+})
+
+
+//adding to inventory structure example
+//<--------->
+//      "owner": "6765a31f18a303b6ce57d97a",
+//      "item_id": "67688f4a23b24b204db1f4a9",
+//      "amount": 2
+//      "tradeable": true
+//<--------->
+app.post("/inventory/add", async (req,res)=>{
+    try{
+        console.log("add item to player inv route accessed")
+        const item = req.body
+        const stackCheck = await GlobalInventoryModel.findOne({owner: item.owner, item_id: item.item_id}, "_id item_id amount")
+        console.log("stackCheck item_id: ", stackCheck.item_id)
+        console.log("req item_id: ", item.item_id)
+        if(stackCheck.item_id.toString() === item.item_id){
+            console.log("loop activated")
+            console.log("stackCheck item_id: ",stackCheck.item_id)
+            const newStack = stackCheck.amount + item.amount
+            //const addToStack = await GlobalInventoryModel.findOneAndUpdate({owner: item.owner, item_id: item.item_id}, {})
+            const addToStack = await GlobalInventoryModel.findOneAndUpdate({ _id: stackCheck._id }, { amount:  newStack })
+            console.log("added ", item.amount, " to stack!", addToStack)
+            return res.json(addToStack)
+        }
+        console.log(item)
+        const newItem = await GlobalInventoryModel.create(item)
+        console.log("new item: ", newItem)
+        res.json({"item created -> ": newItem})
+    }
+    catch(err){
+        res.status(400).json({"error adding item :(": err})
+    }
+})
+
+app.get("/inventory", async (req,res)=>{
+    try{
+        const owner = req.body.owner
+        //const player_name = req.body.name
+        const inventory = await GlobalInventoryModel.find({owner: owner}).populate("item_id")
+        console.log("inventory fetched for player: ", owner)
+        res.json(inventory)
+    }
+    catch(err){
+        res.status(400).json({err: "something went wrong with fetching inventory"})
     }
 })
 
@@ -230,7 +265,25 @@ app.post("/gathersomething", async (req, res)=>{
         console.log("Checking Action Exists: ", current)
         const newCurrent = current.remaining - gather_speed
         console.log("new current remaining: ", newCurrent)
-        const query = { location_id: loid }
+        const query = { action_route: "gathersomething" }
+        const response = await ActionsModel.findOneAndUpdate(query, { remaining: newCurrent })
+        res.status(200).json(response)
+    }catch(err){
+        res.status(400).json(err)
+    }
+})
+
+app.post("/gathersomethingelse", authLogic, async (req, res)=>{
+    try{
+        const loid = req.body.location_id
+        console.log("gathered by user_id -> : ", req.passed_user_id)
+        const gather_speed = req.body.gather_speed
+        const current = await ActionsModel.findOne({action_route: "gathersomethingelse"}, "action_name remaining")
+        console.log("Checking Action Exists: ", current)
+        const newCurrent = current.remaining - gather_speed
+        console.log("new current remaining: ", newCurrent)
+
+        const query = { action_route: "gathersomethingelse" }
         const response = await ActionsModel.findOneAndUpdate(query, { remaining: newCurrent })
         res.status(200).json(response)
     }catch(err){
@@ -239,7 +292,7 @@ app.post("/gathersomething", async (req, res)=>{
 })
 
 //boiler plate action route
-app.post("/", async (req, res)=>{
+app.post("/fooooo", async (req, res)=>{
     try{
         const locations = await LocationsModel.find()
         if(!locations){

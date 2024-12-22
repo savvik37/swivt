@@ -62,7 +62,7 @@ export default function Map() {
           e.preventDefault();
           const response = await axios.post(`${API_BASE_URL}/${actionRoute}`,{
             location_id: currentLocation.location_id,
-            gather_speed: 5
+            gather_speed: 5 //this should come from player/user context
           });
             loadActions()
           console.log("ACTION SUCCESSFUL -> DETAILS: ", response);
