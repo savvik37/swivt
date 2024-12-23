@@ -160,6 +160,16 @@ app.post("/signin", async (req,res)=>{
     }
 })
 
+app.post("/createitem", async (req,res)=>{
+    try{
+        const item = req.body
+        const newItem = await ItemModel.create(item)
+        res.status(200).json(newItem)
+    }
+    catch(err){
+        res.status(400).json({"err": err})
+    }
+})
 
 //adding to inventory structure example
 //<--------->
@@ -194,12 +204,44 @@ app.post("/inventory/add", async (req,res)=>{
     }
 })
 
-app.get("/inventory", async (req,res)=>{
+const inventoryAddHandler = async (req, res) => {
     try{
-        const owner = req.body.owner
+        console.log("add item to player inv route accessed")
+        const item = req.body
+        const stackCheck = await GlobalInventoryModel.findOne({owner: item.owner, item_id: item.item_id}, "_id item_id amount")
+        if(stackCheck){
+            //console.log("stackCheck item_id: ", stackCheck.item_id)
+            //console.log("req item_id: ", item.item_id)
+            if(stackCheck.item_id.toString() === item.item_id){
+                console.log("loop activated")
+                console.log("stackCheck item_id: ",stackCheck.item_id)
+                const newStack = stackCheck.amount + item.amount
+                //const addToStack = await GlobalInventoryModel.findOneAndUpdate({owner: item.owner, item_id: item.item_id}, {})
+                const addToStack = await GlobalInventoryModel.findOneAndUpdate({ _id: stackCheck._id }, { amount:  newStack })
+                console.log("added ", item.amount, " to stack!", addToStack)
+                return res.json(addToStack)
+            }
+        }
+        console.log("No existing stack found, creating new item entry");
+        console.log(item)
+        const newItem = await GlobalInventoryModel.create(item)
+        console.log("new item: ", newItem)
+        res.json({"item created -> ": newItem})
+    }
+    catch(err){
+        res.status(400).json({"error adding item :(": err})
+    }
+}
+
+//get inventory for a specific player - user id comes from authLogic
+app.get("/inventory", authLogic, async (req,res)=>{
+    try{
+        console.log("gathered by user_id -> : ", req.passed_user_id)
+        const owner = req.passed_user_id
         //const player_name = req.body.name
         const inventory = await GlobalInventoryModel.find({owner: owner}).populate("item_id")
         console.log("inventory fetched for player: ", owner)
+        console.log("inventory -> ", inventory[2])
         res.json(inventory)
     }
     catch(err){
@@ -273,7 +315,7 @@ app.post("/gathersomething", async (req, res)=>{
     }
 })
 
-app.post("/gathersomethingelse", authLogic, async (req, res)=>{
+app.post("/gathersomethingelse", authLogic, async (req, res, next)=>{
     try{
         const loid = req.body.location_id
         console.log("gathered by user_id -> : ", req.passed_user_id)
@@ -284,12 +326,22 @@ app.post("/gathersomethingelse", authLogic, async (req, res)=>{
         console.log("new current remaining: ", newCurrent)
 
         const query = { action_route: "gathersomethingelse" }
-        const response = await ActionsModel.findOneAndUpdate(query, { remaining: newCurrent })
-        res.status(200).json(response)
+        await ActionsModel.findOneAndUpdate(query, { remaining: newCurrent })
+        
+        req.body = {
+            owner: req.passed_user_id,
+            item_id: "6768af2a8b5914b7bee3da44",
+            amount: gather_speed,
+            tradeable: true,
+        };
+
+        next()
+        //res.redirect(307, "/inventory/add");
+        //res.status(200).json(response)
     }catch(err){
         res.status(400).json(err)
     }
-})
+}, inventoryAddHandler)
 
 //boiler plate action route
 app.post("/fooooo", async (req, res)=>{

@@ -18,8 +18,8 @@ export default function Nav() {
         <NavLink to="/map" end>
           <p class="navp zoomAnimation" id="navp2"><span>Map</span></p>
         </NavLink>
-        <NavLink to="/" end>
-          <p class="navp zoomAnimation" id="navp2"><span>OPTION</span></p>
+        <NavLink to="/inventory" end>
+          <p class="navp zoomAnimation" id="navp2"><span>Inventory</span></p>
         </NavLink>
         <NavLink to="/" end>
           <p class="navp zoomAnimation" id="navp2"><span>OPTION</span></p>

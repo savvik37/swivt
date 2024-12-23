@@ -6,6 +6,7 @@ import Home from './home';
 import Map from './map';
 import Nav from './nav';
 import Login from './login';
+import Inventory from './inventory';
 import './App.css'
 import { AuthProvider } from './context/AuthProvider';
 import AuthContext from './context/AuthProvider';
@@ -22,6 +23,7 @@ const App = () => {
           <Routes>
             <Route path="/" element={<Home />}/>
             <Route path="/map" element={<Map />}/>
+            <Route path="/inventory" element={<Inventory />}/>
           </Routes>
         </>
       ) : (

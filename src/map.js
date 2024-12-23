@@ -89,7 +89,6 @@ export default function Map() {
                     </div>
                 ))
             )}
-          
         </div>
         <div class="mapContainer animated">
             {Object.values(actions).map((action, index)=>(

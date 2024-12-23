@@ -152,3 +152,18 @@ a{
   border-radius: 10px;
   transition: 0.5s;
 }
+
+.inventoryContainer{
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 20px
+}
+
+.inventoryDiv{
+  border: solid 2px white;
+  padding: 10px;
+}
+
+.inventoryDiv:hover{
+
+}
