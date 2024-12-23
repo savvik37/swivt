@@ -43,11 +43,27 @@ a{
 .homeH2{
   font-size: 100px;
   transition: 0.3s;
+  padding: 0;
+  margin: 0;
 }
 
 .homeH2:hover{
   font-size: 110px;
   transition: 0.3s;
+  /*animation: shake infinite 0.8s;
+  animation-fill-mode: forwards;*/
+}
+
+.infoH2{
+  font-size: 30px;
+  transition: 5s;
+  padding: 0;
+  margin: 0;
+}
+
+.infoH2:hover{
+  font-size: 40px;
+  transition: 2s;
   /*animation: shake infinite 0.8s;
   animation-fill-mode: forwards;*/
 }
@@ -65,6 +81,10 @@ a{
 
 .zoomAnimationNoColor{
   transition: 1s;
+}
+
+.username{
+  font-size: small;
 }
 
 .zoomAnimationNoColor:hover{
@@ -142,13 +162,35 @@ a{
   border-radius: 10px;
 }
 
-.authForm button{
+.loginButton{
   margin-top: 20px;
   width: 100px;
   background-color: rgb(50, 50, 50);
   border: solid 2px rgba(255, 255, 255, 0.097);
   color: white;
   padding: 20px 20px 20px 20px;
+  border-radius: 10px;
+  transition: 0.5s;
+}
+
+.signUpButton{
+  margin-top: 20px;
+  width: 100px;
+  background-color: rgb(206, 206, 206);
+  border: solid 3px rgb(146, 145, 145);
+  color: rgb(55, 55, 55);
+  padding: 20px 20px 20px 20px;
+  border-radius: 10px;
+  transition: 0.5s;
+}
+
+.backToLogIn{
+  margin-top: 20px;
+  width: 100px;
+  background-color: rgb(50, 50, 50);
+  border: solid 2px rgba(255, 255, 255, 0.097);
+  color: white;
+  padding: 10px 10px 10px 10px;
   border-radius: 10px;
   transition: 0.5s;
 }
@@ -164,6 +206,8 @@ a{
   padding: 10px;
 }
 
-.inventoryDiv:hover{
-
+.formLogoInfo{
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }

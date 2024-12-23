@@ -20,12 +20,12 @@ export default function Nav() {
         </NavLink>
         <NavLink to="/inventory" end>
           <p class="navp zoomAnimation" id="navp2"><span>Inventory</span></p>
-        </NavLink>
-        <NavLink to="/" end>
-          <p class="navp zoomAnimation" id="navp2"><span>OPTION</span></p>
-        </NavLink>      
-        <NavLink to="/" end>
-          <p class="navp zoomAnimation" id="navp2"><span>OPTION</span></p>
+        </NavLink> 
+        <NavLink to="/user" end>
+          <div>
+            <p class="username zoomAnimation">user: </p>
+            <p class="navp zoomAnimation" id="navp2">{auth.username}</p>
+          </div>
         </NavLink>           
         </div>  
 

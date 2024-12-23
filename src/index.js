@@ -7,6 +7,8 @@ import Map from './map';
 import Nav from './nav';
 import Login from './login';
 import Inventory from './inventory';
+import User from './User';
+import SignUp from "./signup"
 import './App.css'
 import { AuthProvider } from './context/AuthProvider';
 import AuthContext from './context/AuthProvider';
@@ -24,10 +26,15 @@ const App = () => {
             <Route path="/" element={<Home />}/>
             <Route path="/map" element={<Map />}/>
             <Route path="/inventory" element={<Inventory />}/>
+            <Route path="/user" element={<User />}/>
           </Routes>
         </>
       ) : (
-        <Login />
+        <Routes>
+          <Route path="/" element={<Login />}/>
+          <Route path="/signup" element={<SignUp />}/>
+        </Routes>
+
       )}
     </div> 
   )

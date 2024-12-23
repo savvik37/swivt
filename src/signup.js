@@ -5,20 +5,23 @@ import axios from 'axios';
 import { NavLink } from "react-router";
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
-function Login() {
+function SignUp() {
 
     const { auth, setAuth } = useContext(AuthContext);
 
+    const [username, setUsername] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
 
-    const redirect = useNavigate("/")
+    const redirect = useNavigate("/map")
+
+    const back2Log = useNavigate("/Login")
 
     const handleSubmit = async e =>{
       try{
         e.preventDefault();
         const user = { email, password };
-        const response = await axios.post(`${API_BASE_URL}/signin`, user, {
+        const response = await axios.post(`${API_BASE_URL}/createuser`, user, {
           headers: {
             // Overwrite Axios's automatically set Content-Type
             'Content-Type': 'application/json',
@@ -48,22 +51,25 @@ function Login() {
 
   return (
     <div class="authBox animated">
+      <div class="formLogoInfo">
         <h2 class="homeH2 zoomAnimation">SWIVT</h2>
-        <p id="error-message" class="errMsg fade-in hidden">Credentials are wrong or were not found</p>
+        <h3 class="infoH2">Create an account -{'>'} </h3>
+      </div>
+        <p id="error-message" class="errMsg fade-in hidden">Email Already Exists</p>
         <form class="authForm" onSubmit={handleSubmit}>
+            <label>Username</label>
+            <input type="text" value={username} onChange={({ target }) => setUsername(target.value)}/>
             <label>Email</label>
             <input type="text" value={email} onChange={({ target }) => setEmail(target.value)}/>
             <label>Password</label>
             <input type="password" value={password} onChange={({ target }) => setPassword(target.value)}/>
-            <div>
-              <button type="submit" class="loginButton zoomAnimation">Login</button>
-            <NavLink to="/signup" end>
-              <button type="button" class="signUpButton zoomAnimation">Sign Up</button>
+            <button type="submit" class="signUpButton zoomAnimation">Sign Up</button>
+            <NavLink to="/" end>
+              <button type="button" class="backToLogIn zoomAnimation">Go To Log In</button>
             </NavLink>  
-            </div>
         </form>
     </div>
   )
 }
 
-export default Login;
+export default SignUp;

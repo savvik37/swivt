@@ -113,14 +113,24 @@ const ActionsModel = mongoose.model("actions", ActionsSchema)
 app.post("/createuser", async (req,res)=>{
     try{
         const { username, email, password } = req.body
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const newUser = await UserModel.create({ username, email, password: hashedPassword })
-        console.log(newUser)
-        res.status(200).json("user created")
+        const dupeCheck = await UserModel.findOne({email: email})
+        if(dupeCheck){
+            res.status(400).json("use different email")
+        }
+        if(!dupeCheck){
+            const hashedPassword = await bcrypt.hash(password, 10);
+            const newUser = await UserModel.create({ username, email, password: hashedPassword })
+            console.log(newUser)
+            res.status(200).json("user created")
+        }
     }
     catch(err){
         res.status(400).json(err)
     }
+})
+
+app.post("/user", authLogic, async (req,res)=>{
+    
 })
 
 app.post("/signin", async (req,res)=>{
