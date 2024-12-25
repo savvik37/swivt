@@ -42,9 +42,11 @@ export default function Inventory() {
             <h1>INVENTORY NOT LOADED</h1>
             ) : (
                 inventory.map((item, index)=>(
-                    <div key={index} class="inventoryDiv zoomAnimation">
-                        <p class=""><strong>{item.item_id[0].item_name}</strong></p>
-                        <p class="">x{item.amount}</p>
+                    <div key={index} class="inventoryDiv zoomAnimation zoomAnimationBorder">
+                        <div class="infoDiv">
+                            <p class="inventoryInfoP">{item.item_id[0].item_name}</p>
+                            <p class="inventoryInfoAmount">x{item.amount}</p>
+                        </div>
                         <div class="descDiv">
                             <p class="">{item.item_id[0].item_desc}</p>
                         </div>

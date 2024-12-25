@@ -1,3 +1,32 @@
+@import url('https://fonts.googleapis.com/css2?family=Jacquard+12&family=Micro+5&family=Outfit:wght@100..900&display=swap');
+
+.jacquard-12-regular {
+  font-family: "Jacquard 12", serif;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.micro-5-regular {
+  font-family: "Micro 5", serif;
+  font-weight: 400;
+  font-style: normal;
+  font-size: 2em;
+}
+
+.micro-5-small {
+  font-family: "Micro 5", serif;
+  font-weight: 400;
+  font-style: normal;
+  font-size: 1em;
+}
+
+.outfit-regular {
+  font-family: "Outfit", serif;
+  font-optical-sizing: auto;
+  font-weight: 200;
+  font-style: normal;
+}
+
 body{
   margin: 0;
   padding: 0;
@@ -81,6 +110,10 @@ a{
 
 .zoomAnimationNoColor{
   transition: 1s;
+}
+
+.zoomAnimationBorder:hover{
+  border: solid 2px rgb(255, 94, 0);
 }
 
 .username{
@@ -196,18 +229,58 @@ a{
 }
 
 .inventoryContainer{
+  padding: 100px;
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
   gap: 20px
 }
 
 .inventoryDiv{
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
   border: solid 2px white;
   padding: 10px;
+  font-size: 0.7em
+}
+
+.infoDiv{
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+}
+
+.descDiv{
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+}
+
+.inventoryInfoP{
+  font-size: 2em;
+  text-decoration: underline;
+  margin: auto;
+}
+
+.inventoryInfoAmount{
+  font-size: 1.5em;
+  margin: auto;
 }
 
 .formLogoInfo{
   display: flex;
   flex-direction: column;
   justify-content: center;
+}
+
+.actionButton{
+  border: solid 2px white;
+  background-color: green;
+  color: white;
+}
+
+.actionButton:hover{
+  border: solid 2px green;
+  background-color: white;
+  color: green;
 }

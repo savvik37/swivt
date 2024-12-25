@@ -11,6 +11,7 @@ function SignUp() {
 
     const [username, setUsername] = useState("");
     const [email, setEmail] = useState("");
+    const [error, setError] = useState("");
     const [password, setPassword] = useState("");
 
     const redirect = useNavigate("/map")
@@ -20,7 +21,7 @@ function SignUp() {
     const handleSubmit = async e =>{
       try{
         e.preventDefault();
-        const user = { email, password };
+        const user = { username, email, password };
         const response = await axios.post(`${API_BASE_URL}/createuser`, user, {
           headers: {
             // Overwrite Axios's automatically set Content-Type
@@ -28,9 +29,6 @@ function SignUp() {
           },
           withCredentials: true
         });
-        if(!response){
-            console.error("LOGIN ERROR TRY SIDE")
-        }
         console.log(response.data)
         setAuth({
             user: true,
@@ -38,6 +36,11 @@ function SignUp() {
         })
       }
       catch (err){
+        if (err.response && err.response.data && err.response.data.message) {
+          setError(err.response.data.message); // Set the server error message
+      } else {
+          setError("An unexpected error occurred. Please try again.");
+      }
         console.error("Login error: ", err);
         document.getElementById("error-message").classList.remove('hidden');
       }
@@ -55,7 +58,7 @@ function SignUp() {
         <h2 class="homeH2 zoomAnimation">SWIVT</h2>
         <h3 class="infoH2">Create an account -{'>'} </h3>
       </div>
-        <p id="error-message" class="errMsg fade-in hidden">Email Already Exists</p>
+        <p id="error-message" class="errMsg fade-in hidden">{error}</p>
         <form class="authForm" onSubmit={handleSubmit}>
             <label>Username</label>
             <input type="text" value={username} onChange={({ target }) => setUsername(target.value)}/>

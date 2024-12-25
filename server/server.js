@@ -113,11 +113,16 @@ const ActionsModel = mongoose.model("actions", ActionsSchema)
 app.post("/createuser", async (req,res)=>{
     try{
         const { username, email, password } = req.body
-        const dupeCheck = await UserModel.findOne({email: email})
-        if(dupeCheck){
-            res.status(400).json("use different email")
+        console.log({ username, email, password })
+        const dupeEmailCheck = await UserModel.findOne({email: email})
+        if(dupeEmailCheck){
+            res.status(400).json({message:"email already registered"})
         }
-        if(!dupeCheck){
+        const dupeUsernameCheck = await UserModel.findOne({username: username})
+        if(dupeUsernameCheck){
+            res.status(400).json({message:"username taken"})
+        }
+        if(!dupeEmailCheck && !dupeUsernameCheck){
             const hashedPassword = await bcrypt.hash(password, 10);
             const newUser = await UserModel.create({ username, email, password: hashedPassword })
             console.log(newUser)
@@ -125,6 +130,7 @@ app.post("/createuser", async (req,res)=>{
         }
     }
     catch(err){
+        console.log("something went wrong registering the new user")
         res.status(400).json(err)
     }
 })

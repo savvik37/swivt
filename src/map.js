@@ -94,7 +94,7 @@ export default function Map() {
             {Object.values(actions).map((action, index)=>(
                 <div key={index} class="transactions2">
                     <p class=""><strong>{action.action_name}</strong></p>
-                    <button type="button" class="actionButton" onClick={(e) => handleAction(e, action.action_route)}>Perform</button>
+                    <button type="button" class="actionButton micro-5-small zoomAnimation" onClick={(e) => handleAction(e, action.action_route)}>Perform</button>
                     <p class="animated">total remaining: {action.remaining}</p>
                 </div>
             ))}

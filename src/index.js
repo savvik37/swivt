@@ -18,7 +18,7 @@ const App = () => {
   const { auth } = useContext(AuthContext);
 
   return (
-    <div class="app">
+    <div class="app micro-5-regular">
       {auth?.user? (
         <>
           <Nav />
