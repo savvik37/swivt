@@ -101,9 +101,15 @@ a{
   transition: 1s;
 }
 
+.transactions2{
+  background-color: rgb(69, 69, 69);
+  margin: 5px;
+  padding: 5px;
+}
+
 .zoomAnimation:hover{
-  text-shadow: rgb(255, 94, 0) 0px 0px 25px;
-  color: rgb(255, 94, 0);
+  text-shadow: rgb(253, 255, 188) 0px 0px 25px;
+  color: rgb(255, 234, 223);
   transform: scale(1.1);
   transition: 0.1s;
 }
@@ -113,7 +119,7 @@ a{
 }
 
 .zoomAnimationBorder:hover{
-  border: solid 2px rgb(255, 94, 0);
+  border: solid 2px rgb(255, 234, 223);
 }
 
 .username{
@@ -283,4 +289,12 @@ a{
   border: solid 2px green;
   background-color: white;
   color: green;
+}
+
+.userContainer{
+  margin: 50px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }

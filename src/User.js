@@ -17,8 +17,9 @@ export default function User() {
             console.log("attempting to load map")
             const res = await axios.get(`${API_BASE_URL}/user`)
             setFallback(false)
+            console.log(res.data.username)
             setUser(res.data);
-            console.log("inventory loaded -> ", {user})
+            console.log("user loaded -> ", {user})
         }catch(err){
 
             console.log("auth: ",{auth})
@@ -33,8 +34,22 @@ export default function User() {
 
 
   return (
-    <div>
-        <h2>{auth.username}</h2>
+    <div class="userContainer">
+        
+        {fallback ? (
+            <h1>player not loaded</h1>
+            ) : (
+            <div>
+                <h2>{auth.username}</h2>
+                <h4>XP: {user.player.xp}</h4>
+                <h4>Health: {user.player.health}</h4>
+                <h4>Energy: {user.player.energy}</h4>
+                <h4>Cash: {user.player.cash}</h4>
+                <h4>Gather Speed: {user.player.gather_speed}</h4>
+                <h4>Travel Speed: {user.player.travel_speed}</h4>
+            </div>
+            )}
+
     </div>
   )
 }

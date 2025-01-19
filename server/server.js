@@ -47,8 +47,21 @@ const UserSchema = new mongoose.Schema({
     username: String,
     email: String,
     password: String,
+    player: {
+        health: Number,
+        energy: Number,
+        xp: Number,
+        cash: Number,
+        tech: Number,
+        gather_speed: Number,
+        travel_speed: Number,
+        location_id:[
+            {type: Schema.Types.ObjectId, ref: 'Locations'}
+          ]
+    }
 })
 
+//redundant but kept here for reference of user player field structure
 const PlayerSchema = new mongoose.Schema({
     user_id:[
         {type: Schema.Types.ObjectId, ref: "Users"}
@@ -124,7 +137,24 @@ app.post("/createuser", async (req,res)=>{
         }
         if(!dupeEmailCheck && !dupeUsernameCheck){
             const hashedPassword = await bcrypt.hash(password, 10);
-            const newUser = await UserModel.create({ username, email, password: hashedPassword })
+            const newUser = await UserModel.create({ 
+                username,
+                email,
+                password: hashedPassword,
+                player: {
+                    health: 100,
+                    energy: 100,
+                    xp: 0,
+                    cash: 0,
+                    tech: 0,
+                    gather_speed: 1,
+                    travel_speed: 1,
+                    location_id:[
+                        "67637065a9ec8adb8b96da94"
+                      ]
+                }
+            })
+
             console.log(newUser)
             res.status(200).json("user created")
         }
@@ -135,8 +165,17 @@ app.post("/createuser", async (req,res)=>{
     }
 })
 
-app.post("/user", authLogic, async (req,res)=>{
-    
+app.get("/user", authLogic, async (req,res)=>{
+    try{
+        const user_id = req.passed_user_id
+        console.log("userId: ",user_id)
+        const user = await UserModel.findOne({_id: user_id})
+        console.log(user)
+        res.json(user)
+    }catch{
+        console.log("there was an error gathering user data")
+        res.json("there was an error gathering user data")
+    }
 })
 
 app.post("/signin", async (req,res)=>{
@@ -318,7 +357,7 @@ app.post("/createaction", async (req, res)=>{
 app.post("/gathersomething", async (req, res)=>{
     try{
         const loid = req.body.location_id
-        const gather_speed = req.body.gather_speed
+        const gather_speed = req.body.gather_speed //this needs to get the speed from the user not the req body
         const current = await ActionsModel.findOne({action_route: "gathersomething"}, "action_name remaining")
         console.log("Checking Action Exists: ", current)
         const newCurrent = current.remaining - gather_speed
@@ -333,12 +372,19 @@ app.post("/gathersomething", async (req, res)=>{
 
 app.post("/gathersomethingelse", authLogic, async (req, res, next)=>{
     try{
+        const energy = await UserModel.findOne({_id: req.passed_user_id})
+        console.log("p energy 1",energy)
+        console.log("p energy 2",energy.player)
+        console.log("p energy 3",energy.player.energy)
+        await UserModel.findOneAndUpdate({_id: req.passed_user_id}, {"player.energy": energy.player.energy - 1})
         const loid = req.body.location_id
         console.log("gathered by user_id -> : ", req.passed_user_id)
-        const gather_speed = req.body.gather_speed
+        const gather_speed = await UserModel.findOne({_id: req.passed_user_id})
         const current = await ActionsModel.findOne({action_route: "gathersomethingelse"}, "action_name remaining")
         console.log("Checking Action Exists: ", current)
-        const newCurrent = current.remaining - gather_speed
+        console.log("player gather speed: ", gather_speed.player.gather_speed)
+        console.log("player energy: ", gather_speed.player.energy)
+        const newCurrent = current.remaining - gather_speed.player.gather_speed
         console.log("new current remaining: ", newCurrent)
 
         const query = { action_route: "gathersomethingelse" }
@@ -347,7 +393,7 @@ app.post("/gathersomethingelse", authLogic, async (req, res, next)=>{
         req.body = {
             owner: req.passed_user_id,
             item_id: "6768af2a8b5914b7bee3da44",
-            amount: gather_speed,
+            amount: gather_speed.player.gather_speed,
             tradeable: true,
         };
 
