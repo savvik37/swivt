@@ -10,6 +10,10 @@ const bodyParser = require("body-parser");
 const cookieParser = require('cookie-parser');
 const bcrypt = require("bcrypt");
 const jwt = require('jsonwebtoken');
+//socket io
+const { createServer } = require("http");
+const { Server } = require("socket.io");
+
 const { Route } = require('react-router');
 //const baseUrl = process.env.API_BASE_URL;
 const connectionString = process.env.CONSTRING;
@@ -25,6 +29,15 @@ const itemConsumeRoutes = require('../src/game_routes/item_consume');
 
 const app = express()
 
+const httpServer = createServer(app);
+const io = new Server(httpServer, { 
+    cors: {
+        origin: ['http://localhost:3000', 'http://192.168.137.1:3000', 'http://192.168.0.27:3000', 'http://192.168.1.198:3000'],
+        methods: ["GET", "POST"],
+        credentials: true
+      }
+ });
+
 const corsOptions = {
     origin: ['http://localhost:3000', 'http://192.168.137.1:3000', 'http://192.168.0.27:3000', 'http://192.168.1.198:3000'],
     methods: ['GET', 'POST'],
@@ -35,10 +48,11 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 app.use(cookieParser());
+io.engine.use(cookieParser());
 app.use(bodyParser.json())
 
 //GAME ROUTES
-app.use("game/item_consume", itemConsumeRoutes)
+app.use("/game/item_consume", itemConsumeRoutes)
 //<------------>
 
 mongoose.connect(connectionString, { useNewUrlParser: true, useUnifiedTopology: true });
@@ -123,6 +137,81 @@ const GlobalInventoryModel = mongoose.model("globalinventories", GlobalInventory
 const LocationsModel = mongoose.model("locations", LocationsSchema)
 const ActionsModel = mongoose.model("actions", ActionsSchema)
 
+//socketio for realtime data
+const socketUserMap = new Map();
+
+io.use((socket, next) => {
+    const token = socket.handshake.headers.cookie
+        ?.split(';')
+        .find(c => c.trim().startsWith('token='))?.split('=')[1];
+    if (!token) {
+        return next(new Error('Token missing'));
+    }
+    try {
+        const decoded = jwt.verify(token, secret1);
+        console.log("jwt decoded socketio: ", decoded)
+        socket.user = decoded;
+        next();
+    } catch (err) {
+        next(new Error('Invalid or expired token'));
+    }
+});
+
+io.on("connection", (socket) => {
+    console.log('A user connected:', socket.id);
+
+    if (socket.user?.user_id) {
+        socketUserMap.set(socket.id, socket.user.user_id);
+        console.log(`Mapped socket ${socket.id} to user ${socket.user.user_id}`);
+    }
+    
+    socket.on('fetchPlayerStats', async (userId) => {
+        try {
+            if (!socket.user?.user_id) {
+                return socket.emit('error', { message: 'User not authenticated' });
+            }
+            const user = await UserModel.findOne({ _id: socket.user.user_id });
+            if (user) {
+                socket.emit('playerStats', user.player);
+            } else {
+                socket.emit('error', { message: 'User not found' });
+            }
+        } catch (error) {
+            socket.emit('error', { message: 'Error fetching player stats' });
+        }
+    });
+
+    socket.on('disconnect', () => {
+        console.log('User disconnected:', socket.id);
+    });
+});
+
+//socketio functions
+const updatePlayerStats = async (userId) => {
+    try {
+        console.log("Updating player stats in nav!");
+        console.log(userId);
+
+        console.log(socketUserMap.get(userId))
+
+        const user = await UserModel.findOne({ _id: userId }, "player");
+        if (user) {
+            const socketId = [...socketUserMap.entries()].find(([key, value]) => value === userId)?.[0]; // Get the socketId for the user
+            console.log("socketId in udpateplayerstats: ",socketId)
+            if (socketId) {
+                console.log("about to emit user stats -> ", user.player)
+                io.to(socketId).emit('playerStats', user.player); // Emit to the specific socket
+                console.log(`Emitted updated stats to user ${userId}`);
+            } else {
+                console.log(`Socket not found for user ${userId}`);
+            }
+        }
+    } catch (error) {
+        console.log("updatePlayerStats: there was an error updating player stats");
+        console.error(error);
+    }
+}
+//------------------
 app.post("/createuser", async (req,res)=>{
     try{
         const { username, email, password } = req.body
@@ -130,10 +219,12 @@ app.post("/createuser", async (req,res)=>{
         const dupeEmailCheck = await UserModel.findOne({email: email})
         if(dupeEmailCheck){
             res.status(400).json({message:"email already registered"})
+            return;
         }
         const dupeUsernameCheck = await UserModel.findOne({username: username})
         if(dupeUsernameCheck){
             res.status(400).json({message:"username taken"})
+            return;
         }
         if(!dupeEmailCheck && !dupeUsernameCheck){
             const hashedPassword = await bcrypt.hash(password, 10);
@@ -370,24 +461,29 @@ app.post("/gathersomething", async (req, res)=>{
     }
 })
 
-app.post("/gathersomethingelse", authLogic, async (req, res, next)=>{
+app.post("/gathertrash", authLogic, async (req, res, next)=>{
     try{
+        console.log("gather trash route activated with db userId -> ", req.passed_user_id)
+        updatePlayerStats(req.passed_user_id);
         const energy = await UserModel.findOne({_id: req.passed_user_id})
-        console.log("p energy 1",energy)
-        console.log("p energy 2",energy.player)
-        console.log("p energy 3",energy.player.energy)
+        console.log("player energy", energy.player.energy)
+        if(energy.player.energy <= 0){
+            return res.json({message: "not enough energy!"})
+        }
         await UserModel.findOneAndUpdate({_id: req.passed_user_id}, {"player.energy": energy.player.energy - 1})
+        console.log(updatePlayerStats(req.passed_user_id))
+        updatePlayerStats(req.passed_user_id)
         const loid = req.body.location_id
         console.log("gathered by user_id -> : ", req.passed_user_id)
         const gather_speed = await UserModel.findOne({_id: req.passed_user_id})
-        const current = await ActionsModel.findOne({action_route: "gathersomethingelse"}, "action_name remaining")
+        const current = await ActionsModel.findOne({action_route: "gathertrash"}, "action_name remaining")
         console.log("Checking Action Exists: ", current)
         console.log("player gather speed: ", gather_speed.player.gather_speed)
         console.log("player energy: ", gather_speed.player.energy)
         const newCurrent = current.remaining - gather_speed.player.gather_speed
         console.log("new current remaining: ", newCurrent)
 
-        const query = { action_route: "gathersomethingelse" }
+        const query = { action_route: "gathertrash" }
         await ActionsModel.findOneAndUpdate(query, { remaining: newCurrent })
         
         req.body = {
@@ -423,6 +519,8 @@ app.post("/createLocation", async (req, res)=>{
     
 })
 
-app.listen(3001, '0.0.0.0', ()=>{
-    console.log("listening!");
-})
+httpServer.listen(3001, () => {
+    console.log("")
+    console.log("listening! -socketio")
+    console.log("")
+});

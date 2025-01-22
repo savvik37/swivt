@@ -2,6 +2,7 @@ import React, { useContext, useState, useEffect } from 'react'
 import { NavLink } from "react-router";
 import AuthContext from './context/AuthProvider'
 import axios from 'axios';
+import { io } from "socket.io-client";
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
 export default function Nav() {
@@ -10,26 +11,39 @@ export default function Nav() {
 
   const [fallback, setFallback] = useState(true)
   const [user, setUser] = useState({username: "user"})
+  const [socket, setSocket] = useState(null);
 
-  const loadMap = async () => {
-      try{
-          console.log("attempting to load map")
-          const res = await axios.get(`${API_BASE_URL}/user`)
-          setFallback(false)
-          console.log(res.data.username)
-          setUser(res.data);
-          console.log("user loaded -> ", {user})
-      }catch(err){
+  useEffect(() => {
+    const newSocket = io(API_BASE_URL, {
+        withCredentials: true,
+        autoConnect: true,
+        transports: ['websocket', 'polling'],
+    });
+    setSocket(newSocket)
 
-          console.log("auth: ",{auth})
-          setFallback(true)
-          console.log("Error loading map:", err.response || err.message)
-      }
-  }
-  
-  useEffect(()=>{
-      loadMap()
-  }, [])
+    return () => {
+        newSocket.disconnect(); // cleanup
+    };
+},[]); 
+
+  useEffect(() => {
+    if (socket) {
+        socket.emit("fetchPlayerStats");
+        socket.on("playerStats", (player) => {
+            console.log(player)
+            setUser((prevUser) => ({ ...prevUser, player }));
+            setFallback(false);
+        });
+        socket.on("error", (error) => {
+            console.error("Socket error:", error);
+        });
+
+        return () => {
+            socket.off("playerStats");
+            socket.off("error");
+        };
+    }
+}, [socket, auth]);
 
   return (
     <div class="navbar">
@@ -43,12 +57,11 @@ export default function Nav() {
         {fallback ? (
             <p>player not loaded</p>
             ) : (
-            <div class="na">
-                <p>{auth.username}</p>
-                <p>XP: {user.player.xp}</p>
-                <p>Health: {user.player.health}</p>
-                <p>Energy: {user.player.energy}</p>
-                <p>Cash: {user.player.cash}</p>
+            <div class="navStats">
+                <p>XP: <strong class="purpleText">{user.player.xp}</strong></p>
+                <p>Health: <strong class="redText">{user.player.health}</strong></p>
+                <p>Energy: <strong class="yellowText">{user.player.energy}</strong></p>
+                <p>Cash: <strong class="greenText">{user.player.cash}</strong></p>
             </div>
             )}
           <NavLink to="/map" end>

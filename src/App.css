@@ -111,7 +111,7 @@ a{
   text-shadow: rgb(253, 255, 188) 0px 0px 25px;
   color: rgb(255, 234, 223);
   transform: scale(1.1);
-  transition: 0.1s;
+  transition: 0.000001s;
 }
 
 .zoomAnimationNoColor{
@@ -297,4 +297,33 @@ a{
   flex-direction: column;
   justify-content: center;
   align-items: center;
+}
+
+.navStats{
+  font-size: medium;
+  background-color: rgb(56, 56, 56);
+}
+
+.redText{
+  color: rgb(181, 0, 0);
+}
+
+.yellowText{
+  color: rgb(255, 220, 20);
+}
+
+.blueText{
+  color: rgb(0, 136, 255);
+}
+
+.orangeText{
+  color: rgb(255, 123, 0);
+}
+
+.purpleText{
+  color: rgb(152, 77, 222);
+}
+
+.greenText{
+  color: rgb(0, 141, 0);
 }
