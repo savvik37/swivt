@@ -13,8 +13,9 @@ function SignUp() {
     const [email, setEmail] = useState("");
     const [error, setError] = useState("");
     const [password, setPassword] = useState("");
+    const [completed, setCompleted] = useState(false)
 
-    const redirect = useNavigate("/map")
+    const redirect = useNavigate()
 
     const back2Log = useNavigate("/Login")
 
@@ -31,10 +32,13 @@ function SignUp() {
         });
         console.log(response.data)
         setAuth({
-            user: true,
-            username: response.data
+            user: false
         })
+        setCompleted(true)
+        console.log("about to redirect!")
+        redirect("/")
       }
+
       catch (err){
         if (err.response && err.response.data && err.response.data.message) {
           setError(err.response.data.message); // Set the server error message
@@ -47,10 +51,10 @@ function SignUp() {
     };
 
     useEffect(()=>{
-        if(auth.user){
-            redirect()
+        if(completed === true){
+            redirect("/")
         }
-    }, [])
+    }, [completed, setCompleted, redirect])
 
   return (
     <div class="authBox animated">

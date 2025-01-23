@@ -50,7 +50,7 @@ export default function Nav() {
       <NavLink to="/" end>
         <div class="navbardivideHome">
           <p class="navp zoomAnimation" id="navp1"><span>Home</span></p>
-          <p class="navpSmall zoomAnimation" id="navp1" onClick={(e) => {setAuth({ user: false })}}><span>Sign Out</span></p>
+          <p class="navpSmall zoomAnimation" id="navp1" onClick={(e) => {if(socket){socket.disconnect();setSocket(null)} setAuth({ user: false })}}><span>Sign Out</span></p>
         </div>      
       </NavLink>
         <div class="navbardivideOptions">
@@ -62,6 +62,7 @@ export default function Nav() {
                 <p>Health: <strong class="redText">{user.player.health}</strong></p>
                 <p>Energy: <strong class="yellowText">{user.player.energy}</strong></p>
                 <p>Cash: <strong class="greenText">{user.player.cash}</strong></p>
+                <p>Active Actions: <strong class="blueText">{user.player.active_actions}/{user.player.actions_limit}</strong></p>
             </div>
             )}
           <NavLink to="/map" end>

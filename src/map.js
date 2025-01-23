@@ -1,3 +1,12 @@
+//this whole component needs to be way more conditional e.g. conditionally render "total remaining" ONLY if its a gathering action
+//actions need to display relevant information conditionally e.g. "go to the nightclub" will teleport the player to a nightclub interface
+//this could potentially be solved without conditional hemroids if i just define what all the different types of "actions" are
+//for example the actions will be divided into categories that are true in all locations
+//(not all have to actually exist there tho, but architectually there is a strucutre to how locations work)
+//LOCATION STRUCUTRE:
+// Gathering Actions
+// Spots (Locations within locations such as shops, clubs blah blah)
+// NPC's (cant decide if these should be only at spots or both at location and spots within it)
 import React, { useState, useEffect, useContext } from 'react'
 import { useNavigate } from 'react-router';
 import axios from 'axios';
@@ -45,7 +54,8 @@ export default function Map() {
                 withCredentials: true
             })
             setActions(response.data);
-            console.log("actions loaded -> ", actions)  
+            console.log("actions loaded -> ", actions) 
+            console.log("actions time -> ", actions[0])
         }catch{
             
             console.log("loadActions error occured")
@@ -75,6 +85,7 @@ export default function Map() {
   return (
     <div class="mapComponent animated">
         <div class="mapContainer animated">
+            MAP:
             {locationsFallback ? (
                <h1>LOCATIONS NOT LOADED</h1>
             ) : (
@@ -89,14 +100,20 @@ export default function Map() {
                 ))
             )}
         </div>
-        <div class="mapContainer animated">
+        <div class="actions mapContainer animated">
+            <p>Resources:</p>
             {Object.values(actions).map((action, index)=>(
                 <div key={index} class="transactions2">
                     <p class=""><strong>{action.action_name}</strong></p>
-                    <button type="button" class="actionButton micro-5-small zoomAnimation" onClick={(e) => handleAction(e, action.action_route)}>Perform</button>
+                    <button type="button" class="actionButton micro-5-small zoomAnimation" onClick={(e) => handleAction(e, action.action_route)}>Gather</button>
                     <p class="animated">total remaining: {action.remaining}</p>
+                    <p class="animated">time: {action.time}</p>
                 </div>
             ))}
+        </div>
+        <div class="actions mapContainer animated">
+            <p>Spots:</p>
+            <div class="transactions2">DUMMYSPOT</div>
         </div>
     </div>
   )

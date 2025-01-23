@@ -69,6 +69,7 @@ const UserSchema = new mongoose.Schema({
         tech: Number,
         gather_speed: Number,
         travel_speed: Number,
+        actions_limit: Number,
         location_id:[
             {type: Schema.Types.ObjectId, ref: 'Locations'}
           ]
@@ -81,11 +82,13 @@ const PlayerSchema = new mongoose.Schema({
         {type: Schema.Types.ObjectId, ref: "Users"}
     ],
     health: Number,
+    energy: Number,
     xp: Number,
     cash: Number,
     tech: Number,
     gather_speed: Number,
     travel_speed: Number,
+    actions_limit: Number,
     location_id:[
         {type: Schema.Types.ObjectId, ref: 'Locations'}
       ]
@@ -130,17 +133,35 @@ const ActionsSchema = new mongoose.Schema({
     ]
 })
 
+const PerformingSchema = new mongoose.Schema({
+    userId:[
+        {type: Schema.Types.ObjectId, ref: 'users'}
+    ],
+    location_id:[
+        {type: Schema.Types.ObjectId, ref: 'locations'}
+    ],
+    action_id:[
+        {type: Schema.Types.ObjectId, ref: 'locations'}
+    ],
+    status: { type: String, enum: ['in_progress', 'completed'], default: 'in_progress' },
+    startTime: { type: Date, default: Date.now },
+    endTime: { type: Date, required: true },
+})
+
 const UserModel = mongoose.model("users", UserSchema)
 const PlayerModel = mongoose.model("players", PlayerSchema)
 const ItemModel = mongoose.model("items", ItemSchema)
 const GlobalInventoryModel = mongoose.model("globalinventories", GlobalInventorySchema)
 const LocationsModel = mongoose.model("locations", LocationsSchema)
 const ActionsModel = mongoose.model("actions", ActionsSchema)
+const PerformingModel = mongoose.model("performing", PerformingSchema)
 
-//socketio for realtime data
+//socketio user id to socket id map
 const socketUserMap = new Map();
 
+//socketio middleware - is needed for updating data and shit
 io.use((socket, next) => {
+    //i have almost no idea how this works but we get the token from the cookies! im confused about c=>c.trim() wtf even is that
     const token = socket.handshake.headers.cookie
         ?.split(';')
         .find(c => c.trim().startsWith('token='))?.split('=')[1];
@@ -161,10 +182,11 @@ io.on("connection", (socket) => {
     console.log('A user connected:', socket.id);
 
     if (socket.user?.user_id) {
-        socketUserMap.set(socket.id, socket.user.user_id);
+        socketUserMap.set(socket.user.user_id, socket.id);
         console.log(`Mapped socket ${socket.id} to user ${socket.user.user_id}`);
     }
     
+    //initial data fetch on socket connection
     socket.on('fetchPlayerStats', async (userId) => {
         try {
             if (!socket.user?.user_id) {
@@ -187,6 +209,8 @@ io.on("connection", (socket) => {
 });
 
 //socketio functions
+//updatePlayerStats is triggered when an action is perfromed e.g. /gathertrash
+//  - i still need to learn how websockets work cuz there is some funky behaviour occasionally
 const updatePlayerStats = async (userId) => {
     try {
         console.log("Updating player stats in nav!");
@@ -196,12 +220,13 @@ const updatePlayerStats = async (userId) => {
 
         const user = await UserModel.findOne({ _id: userId }, "player");
         if (user) {
-            const socketId = [...socketUserMap.entries()].find(([key, value]) => value === userId)?.[0]; // Get the socketId for the user
+            //const socketId = [...socketUserMap.entries()].find(([key, value]) => value === userId)?.[0]; // this just doesnt need to be this complicated
+            const socketId = socketUserMap.get(userId)
             console.log("socketId in udpateplayerstats: ",socketId)
             if (socketId) {
                 console.log("about to emit user stats -> ", user.player)
-                io.to(socketId).emit('playerStats', user.player); // Emit to the specific socket
-                console.log(`Emitted updated stats to user ${userId}`);
+                io.to(socketId).emit('playerStats', user.player);
+                console.log(`emitted updated stats to user ${userId}`);
             } else {
                 console.log(`Socket not found for user ${userId}`);
             }
@@ -240,6 +265,7 @@ app.post("/createuser", async (req,res)=>{
                     tech: 0,
                     gather_speed: 1,
                     travel_speed: 1,
+                    actions_limit: 2,
                     location_id:[
                         "67637065a9ec8adb8b96da94"
                       ]
@@ -413,7 +439,7 @@ app.post("/getactions", async (req, res)=>{
     try{
         console.log("getactions route accessed")
         const loid = req.body.location_id
-        const actions = await ActionsModel.find({location_id: loid}, "action_name action_route remaining")
+        const actions = await ActionsModel.find({location_id: loid})
         if(!actions){
             console.log("there is a db error or no actions are avaliable")
             return res.status(404).json({message: "actions not found"})

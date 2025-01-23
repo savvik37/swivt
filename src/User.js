@@ -47,6 +47,7 @@ export default function User() {
                 <h4>Cash: {user.player.cash}</h4>
                 <h4>Gather Speed: {user.player.gather_speed}</h4>
                 <h4>Travel Speed: {user.player.travel_speed}</h4>
+                <h4>Actions Limit: {user.player.actions_limit}</h4>
             </div>
             )}
 
